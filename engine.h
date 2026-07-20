@@ -529,6 +529,7 @@ bool get_float_from_config(Config *config, const char *key, float *value_out);
 bool get_char_from_config(Config *config, const char *key, char *value_out);
 bool get_str_from_config(Config *config, const char *key,
                          const char **value_out);
+bool get_color_from_config(Config *config, const char *key, Color *value_out);
 
 bool set_int_to_config(Config *config, const char *key, int value);
 bool set_float_to_config(Config *config, const char *key, float value);
@@ -3020,6 +3021,29 @@ bool get_str_from_config(Config *config, const char *key,
   kv->value.value_ptr = (void *)value_out;
 
   return true;
+}
+
+bool get_color_from_config(Config *config, const char *key, Color *value_out) {
+  Config_value value = {.err_msg = "get_color_from_config::Invalid"};
+  if (!get_value_from_config(config, key, &value)) {
+    log_debug("Failed to get key '%s'", key);
+    return false;
+  }
+
+  if (value.kind != CONF_VAL_COL) {
+    log_debug("Key '%s' expected to be color but was %s", key,
+              config_value_kind_as_str(value.kind));
+    return false;
+  }
+
+  *value_out = value.as.color;
+  // TODO: We are already doing a lookup above in `get_value_from_config()`
+  Config_KV *kv = shgetp_null(*config, key);
+  ASSERT(kv, "We already checked if the key exists above");
+  kv->value.value_ptr = (void *)value_out;
+
+  return true;
+
 }
 
 bool set_int_to_config(Config *config, const char *key, int value) {
